@@ -1,0 +1,614 @@
+import random
+import sys
+
+positions = [["-"] * 8 for x in range(8)]
+
+player1Symbols = {"p1": "♟", "p2": "♟", "p3": "♟", "p4": "♟",
+                  "p5": "♟", "p6": "♟", "p7": "♟", "p8": "♟",
+                  "r1": "♜", "r2": "♜", "k1": "♞", "k2": "♞",
+                  "b1": "♝", "b2": "♝", "q": "♛", "+": "♚"}
+
+player2Symbols = {"p1": "♙", "p2": "♙", "p3": "♙", "p4": "♙",
+                  "p5": "♙", "p6": "♙", "p7": "♙", "p8": "♙",
+                  "r1": "♖", "r2": "♖", "k1": "♘", "k2": "♘",
+                  "b1": "♗", "b2": "♗", "q": "♕", "+": "♔"}
+
+symbolFunction = {"♙": "movePawn()", "♔": "moveKing()", "♘": "moveKnight()",
+                  "♗": "moveBishop()", "♖": "moveRook()", "♕": "moveQueen()",
+                  "♟": "movePawn()", "♚": "moveKing()", "♞": "moveKnight()",
+                  "♝": "moveBishop()", "♜": "moveRook()", "♛": "moveQueen()"
+                  }
+
+player1Pieces = {"p1": [6, 0], "p2": [6, 1], "p3": [6, 2], "p4": [6, 3],
+                 "p5": [6, 4], "p6": [6, 5], "p7": [6, 6], "p8": [6, 7],
+                 "r1": [4, 7], "r2": [5, 0], "k1": [2, 2], "k2": [7, 6],
+                 "b1": [7, 2], "b2": [7, 5], "q": [7, 3], "+": [7, 4]}
+
+player2Pieces = {"p1": [1, 0], "p2": [1, 1], "p3": [1, 2], "p4": [1, 3],
+                 "p5": [1, 4], "p6": [1, 5], "p7": [1, 6], "p8": [1, 7],
+                 "r1": [0, 0], "r2": [0, 7], "k1": [0, 1], "k2": [0, 6],
+                 "b1": [0, 2], "b2": [0, 5], "q": [0, 3], "+": [4, 2]}
+
+def display():
+    ix = 8
+    for row in positions:
+        print(ix, end="| ")
+        for place in row:
+            print(place, end=" ")
+        print()
+        ix -= 1
+    print("  ----------------")
+    print("   a b c d e f g h")
+
+def updateBoard():
+    for piece, position in player1Pieces.items():
+        positions[position[0]][position[1]] = player1Symbols[piece]
+
+    for piece, position in player2Pieces.items():
+        positions[position[0]][position[1]] = player2Symbols[piece]
+
+def movePawn(coords):
+    possibleMoves = []
+    forbiddenMoves = []
+    piece = positions[coords[0]][coords[1]]
+    if piece in player1Symbols.values() and coords[0] != 0 and coords[0] != 7:
+        # colour = "white"
+        if coords[0] == 6 and positions[coords[0] - 1][coords[1]] not in player2Symbols.values() and \
+                positions[coords[0] - 1][coords[1]] not in player1Symbols.values() and \
+                positions[coords[0] - 2][coords[1]] not in player2Symbols.values() and positions[coords[0] - 2][
+            coords[1]] not in player1Symbols.values():
+            possibleMoves.append([coords[0] - 1, coords[1]])
+            possibleMoves.append([coords[0] - 2, coords[1]])
+        elif positions[coords[0] - 1][coords[1]] not in player2Symbols.values() and positions[coords[0] - 1][
+            coords[1]] not in player1Symbols.values():
+            possibleMoves.append([coords[0] - 1, coords[1]])
+            # kill
+        if coords[1] == 0 and positions[coords[0] - 1][coords[1] + 1] in player1Symbols.values():
+            possibleMoves.append([coords[0] - 1, coords[1] + 1])
+        elif coords[1] == 7 and positions[coords[0] - 1][coords[1] - 1] in player2Symbols.values():
+            possibleMoves.append([coords[0] - 1, coords[1] - 1])
+        elif coords[1] != 7 and coords[1] != 0:
+            if positions[coords[0] - 1][coords[1] + 1] in player2Symbols.values():
+                possibleMoves.append([coords[0] - 1, coords[1] + 1])
+            if positions[coords[0] - 1][coords[1] - 1] in player2Symbols.values():
+                possibleMoves.append([coords[0] - 1, coords[1] - 1])
+            forbiddenMoves.append([coords[0] - 1, coords[1] + 1])
+            forbiddenMoves.append([coords[0] - 1, coords[1] - 1])
+        return possibleMoves, forbiddenMoves
+    elif piece in player2Symbols.values() and coords[0] != 0 and coords[0] != 7:
+        # colour = "black"
+        if coords[0] == 1 and positions[coords[0] + 1][coords[1]] not in player1Symbols.values() and \
+                positions[coords[0] + 1][coords[1]] not in player2Symbols.values() and \
+                positions[coords[0] + 2][coords[1]] not in player1Symbols.values() and positions[coords[0] + 2][
+            coords[1]] not in player2Symbols.values():
+            possibleMoves.append([coords[0] + 1, coords[1]])
+            possibleMoves.append([coords[0] + 2, coords[1]])
+        elif positions[coords[0] + 1][coords[1]] not in player1Symbols.values() and positions[coords[0] + 1][
+            coords[1]] not in player2Symbols.values():
+            possibleMoves.append([coords[0] + 1, coords[1]])
+        # kill
+        if coords[1] == 0 and positions[coords[0] + 1][coords[1] + 1] in player1Symbols.values():
+            possibleMoves.append([coords[0] + 1, coords[1] + 1])
+        elif coords[1] == 7 and positions[coords[0] + 1][coords[1] - 1] in player1Symbols.values():
+            possibleMoves.append([coords[0] + 1, coords[1] - 1])
+        elif coords[1] != 7 and coords[1] != 0:
+            if positions[coords[0] + 1][coords[1] + 1] in player1Symbols.values():
+                possibleMoves.append([coords[0] + 1, coords[1] + 1])
+            if positions[coords[0] + 1][coords[1] - 1] in player1Symbols.values():
+                possibleMoves.append([coords[0] + 1, coords[1] - 1])
+            forbiddenMoves.append([coords[0] + 1, coords[1] + 1])
+            forbiddenMoves.append([coords[0] + 1, coords[1] - 1])
+        return possibleMoves, forbiddenMoves
+
+def moveRook(coords):
+    piece = positions[coords[0]][coords[1]]
+    if piece in player1Symbols.values():
+        colour = "white"
+    else:
+        colour = "black"
+
+    possibleMoves = []
+    forbiddenPlus = []
+    # check right
+    for x in range(coords[1] + 1, 8):
+        currentCoord = [coords[0], x]
+        if not (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") and not (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            possibleMoves.append(currentCoord)
+        elif (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") or (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            forbiddenPlus.append(currentCoord)
+            break
+    # check down
+    for x in range(coords[0] + 1, 8):
+        currentCoord = [x, coords[1]]
+        if not (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") and not (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            possibleMoves.append(currentCoord)
+        elif (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") or (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            forbiddenPlus.append(currentCoord)
+            break
+    # check left
+    for x in range(coords[1] - 1, -1, -1):
+        currentCoord = [coords[0], x]
+        if not (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") and not (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            possibleMoves.append(currentCoord)
+        elif (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") or (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            forbiddenPlus.append(currentCoord)
+            break
+    # check up
+    for x in range(coords[0] - 1, -1, -1):
+        currentCoord = [x, coords[1]]
+        if not (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") and not (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            possibleMoves.append(currentCoord)
+        elif (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") or (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            forbiddenPlus.append(currentCoord)
+            break
+    return possibleMoves, forbiddenPlus
+
+def moveKnight(coords):
+    piece = positions[coords[0]][coords[1]]
+    forbiddenMoves = []
+    if piece in player1Symbols.values():
+        colour = "white"
+    else:
+        colour = "black"
+    possibleMoves = []
+    # check up up-right
+    j = coords[0] - 2
+    i = coords[1] + 1
+    if i < 8 and j > -1:
+        currentCoord = [j, i]
+        if not (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") and not (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            possibleMoves.append(currentCoord)
+        else:
+            forbiddenMoves.append(currentCoord)
+            # check up-right
+    j = coords[0] - 1
+    i = coords[1] + 2
+    if i < 8 and j > -1:
+        currentCoord = [j, i]
+        if not (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") and not (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            possibleMoves.append(currentCoord)
+        else:
+            forbiddenMoves.append(currentCoord)
+    # check down down -right
+    j = coords[0] + 2
+    i = coords[1] + 1
+    if i < 8 and j < 8:
+        currentCoord = [j, i]
+        if not (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") and not (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            possibleMoves.append(currentCoord)
+        else:
+            forbiddenMoves.append(currentCoord)
+    # check down-right
+    j = coords[0] + 1
+    i = coords[1] + 2
+    if i < 8 and j < 8:
+        currentCoord = [j, i]
+        currentCoord = [j, i]
+        if not (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") and not (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            possibleMoves.append(currentCoord)
+        else:
+            forbiddenMoves.append(currentCoord)
+    # check down down -left
+    j = coords[0] + 2
+    i = coords[1] - 1
+    if i > -1 and j < 8:
+        currentCoord = [j, i]
+        if not (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") and not (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            possibleMoves.append(currentCoord)
+        else:
+            forbiddenMoves.append(currentCoord)
+    # check down -left
+    j = coords[0] + 1
+    i = coords[1] - 2
+    if i > -1 and j < 8:
+        currentCoord = [j, i]
+        if not (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") and not (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            possibleMoves.append(currentCoord)
+        else:
+            forbiddenMoves.append(currentCoord)
+    # check up up-left
+    j = coords[0] - 2
+    i = coords[1] - 1
+    if i > -1 and j > -1:
+        currentCoord = [j, i]
+        if not (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") and not (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            possibleMoves.append(currentCoord)
+        else:
+            forbiddenMoves.append(currentCoord)
+    # check up-left
+    j = coords[0] - 1
+    i = coords[1] - 2
+    if i > -1 and j > -1:
+        currentCoord = [j, i]
+        if not (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") and not (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            possibleMoves.append(currentCoord)
+        else:
+            forbiddenMoves.append(currentCoord)
+    # print(possibleMoves)
+    return possibleMoves, []
+
+def moveBishop(coords):
+    piece = positions[coords[0]][coords[1]]
+    forbiddenMoves = []
+    if piece in player1Symbols.values():
+        colour = "white"
+    else:
+        colour = "black"
+    possibleMoves = []
+    # check up-right
+    j = coords[0] - 1
+    i = coords[1] + 1
+    while i < 8 and j > -1:
+        currentCoord = [j, i]
+        if not (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") and not (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            possibleMoves.append(currentCoord)
+        elif (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") or (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            forbiddenMoves.append(currentCoord)
+            break
+        j -= 1
+        i += 1
+    # check down-right
+    j = coords[0] + 1
+    i = coords[1] + 1
+    while i < 8 and j < 8:
+        currentCoord = [j, i]
+        if not (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") and not (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            possibleMoves.append(currentCoord)
+        elif (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") or (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            forbiddenMoves.append(currentCoord)
+            break
+        j += 1
+        i += 1
+    # check down-left
+    j = coords[0] + 1
+    i = coords[1] - 1
+    while i > -1 and j < 8:
+        currentCoord = [j, i]
+        if not (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") and not (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            possibleMoves.append(currentCoord)
+        elif (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") or (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            forbiddenMoves.append(currentCoord)
+            break
+        j += 1
+        i -= 1
+    # check up-left
+    j = coords[0] - 1
+    i = coords[1] - 1
+    while i > -1 and j > -1:
+        currentCoord = [j, i]
+        if not (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") and not (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            possibleMoves.append(currentCoord)
+        elif (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") or (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            forbiddenMoves.append(currentCoord)
+            break
+        j -= 1
+        i -= 1
+    return possibleMoves, forbiddenMoves
+
+def moveQueen(coords):
+    possibleMoves = moveBishop(coords)[0]
+    possibleMoves = possibleMoves + moveRook(coords)[0]
+    forbiddenMoves = moveBishop(coords)[1]
+    forbiddenMoves = forbiddenMoves + moveRook(coords)[1]
+    return possibleMoves, forbiddenMoves
+
+
+def moveKing(coords):
+    piece = positions[coords[0]][coords[1]]
+    if piece in player1Symbols.values():
+        colour = "white"
+    else:
+        colour = "black"
+    possibleMoves = []
+    # check left
+    j = coords[0]
+    i = coords[1] - 1
+    if i > -1:
+        currentCoord = [j, i]
+        if not (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") and not (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            possibleMoves.append(currentCoord)
+    # check right
+    j = coords[0]
+    i = coords[1] + 1
+    if i < 8:
+        currentCoord = [j, i]
+        if not (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") and not (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            possibleMoves.append(currentCoord)
+    # check up
+    j = coords[0] - 1
+    i = coords[1]
+    if j > -1:
+        currentCoord = [j, i]
+        if not (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") and not (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            possibleMoves.append(currentCoord)
+    # check down
+    j = coords[0] + 1
+    i = coords[1]
+    if j < 8:
+        currentCoord = [j, i]
+        if not (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") and not (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            possibleMoves.append(currentCoord)
+    # check top-right
+    j = coords[0] - 1
+    i = coords[1] + 1
+    if j > -1 and i < 8:
+        currentCoord = [j, i]
+        if not (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") and not (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            possibleMoves.append(currentCoord)
+    # check top-left
+    j = coords[0] - 1
+    i = coords[1] - 1
+    if j > -1 and i > -1:
+        currentCoord = [j, i]
+        if not (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") and not (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            possibleMoves.append(currentCoord)
+    # check bottom-right
+    j = coords[0] + 1
+    i = coords[1] + 1
+    if j < 8 and i < 8:
+        currentCoord = [j, i]
+        if not (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") and not (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            possibleMoves.append(currentCoord)
+    # check bottom-left
+    j = coords[0] + 1
+    i = coords[1] - 1
+    if j < 8 and i > -1:
+        currentCoord = [j, i]
+        if not (positions[currentCoord[0]][currentCoord[1]] in player2Symbols.values() and colour == "black") and not (
+                positions[currentCoord[0]][currentCoord[1]] in player1Symbols.values() and colour == "white"):
+            possibleMoves.append(currentCoord)
+    return possibleMoves, []
+
+def convertChoice(choice):
+    conversionTable = {"a": 0, "b": 1, "c": 2, "d": 3, "e": 4,
+                       "f": 5, "g": 6, "h": 7}
+    if len(choice) != 2:
+        return None
+    elif choice[0] not in conversionTable or int(choice[1]) > 8 or int(choice[1]) < 1:
+        return None
+    else:
+        return [len(positions) - int(choice[1]), conversionTable[choice[0]]]
+
+def checkStalemate(coords, player):
+    forbiddenMoves = ""
+    check1 = False;
+    check2 = False;
+    staleMate1 = False;
+    staleMate2 = False
+    if player == "white":
+        tempCoords = player1Pieces["+"]
+        positions[tempCoords[0]][tempCoords[1]] = "-"
+        i = 1
+        for key, val in player2Pieces.items():
+            if i <= 8:
+                forbiddenMoves += str(movePawn(val)[1])
+            elif 10 >= i > 8:
+                forbiddenMoves += str(moveRook(val))
+            elif 12 >= i > 10:
+                forbiddenMoves += str(moveKnight(val))
+            elif 14 >= i > 12:
+                forbiddenMoves += str(moveBishop(val))
+            elif i == 15:
+                forbiddenMoves += str(moveQueen(val))
+            else:
+                forbiddenMoves += str(moveKing(val))
+            i += 1
+        positions[tempCoords[0]][tempCoords[1]] = "♚"
+
+        poss = moveKing(player1Pieces['+'])[0]
+        possibleMoves = []
+        for move in poss:
+            if str(move) not in forbiddenMoves:
+                possibleMoves.append(move)
+                staleMate1 = False
+            elif str(player1Pieces['+']) in str(forbiddenMoves):
+                check1 = True
+        if len(possibleMoves) == 0:
+            staleMate1 = True
+        return possibleMoves, check1, check2, staleMate1, staleMate2
+    elif player == "black":
+        i = 1
+        tempCoords = player2Pieces["+"]
+        positions[tempCoords[0]][tempCoords[1]] = "-"
+        for key in player1Pieces.keys():
+            if i <= 8:
+                forbiddenMoves += str(movePawn(player1Pieces[key])[1])
+            elif 10 >= i > 8:
+                forbiddenMoves += str(moveRook(player1Pieces[key]))
+            elif 12 >= i > 10:
+                forbiddenMoves += str(moveKnight(player1Pieces[key]))
+            elif 14 >= i > 12:
+                forbiddenMoves += str(moveBishop(player1Pieces[key]))
+            elif i == 15:
+                forbiddenMoves += str(moveQueen(player1Pieces[key]))
+            else:
+                forbiddenMoves += str(moveKing(player1Pieces[key]))
+            i += 1
+        positions[tempCoords[0]][tempCoords[1]] = "♔"
+        poss = moveKing(player2Pieces['+'])[0]
+        possibleMoves = []
+        for move in poss:
+            if str(move) not in str(forbiddenMoves):
+                possibleMoves.append(move)
+                staleMate2 = False
+            elif str(player2Pieces['+']) in str(forbiddenMoves):
+                check2 = True
+        if len(possibleMoves) == 0:
+            staleMate2 = True
+        return possibleMoves, check1, check2, staleMate1, staleMate2
+
+# main game
+updateBoard()
+Name1 = input("Player 1 Name: ")
+Name2 = input("Player 2 Name: ")
+input("Press enter to flip coin.\n")
+currentPlayer = random.randint(0, 1)
+if currentPlayer == 0:
+    Player1 = Name1
+    Player2 = Name2
+else:
+    Player1 = Name2
+    Player2 = Name1
+
+print("{} goes first".format(Player1))
+currentPlayer = 0
+while True:
+    display()
+    possibleMoves, check1, check2, staleMate1, staleMate2 = checkStalemate(player1Pieces["+"], "white")
+    possibleMoves, check1, check2, staleMate1, staleMate2 = checkStalemate(player2Pieces["+"], "black")
+
+    if staleMate2 and check2:
+        print(f"\nCheckmate: {Player1} Has Won!\nGame Over!\n")
+        sys.exit()
+    elif staleMate1 and check1:
+        print(f"\nCheckmate: {Player2} Has Won!\nGame Over!\n")
+        sys.exit()
+    else:
+        pass
+    if currentPlayer == 0:
+        print("Now white plays...")
+    else:
+        print("Now black plays...")
+    print("It is {}'s turn".format(eval("Player" + str(currentPlayer + 1))))
+    if currentPlayer == 0:
+        inValid1 = check1
+        inValid = check1
+    else:
+        inValid2 = check2
+        inValid = check2
+    # Get source
+    if not inValid:
+        choice = input("Please select a piece coordinate: ")
+        while len(choice) != 2:
+            choice = input("Please select a piece coordinate: ")
+        choiceCoord = convertChoice(choice)
+        piece = positions[choiceCoord[0]][choiceCoord[1]]
+    else:
+        if inValid1:
+            print("Check!")
+
+            piece = "♚"
+            choiceCoord = player1Pieces["+"]
+        else:
+            print("Check!")
+            piece = "♔"
+            choiceCoord = player2Pieces["+"]
+
+    while choiceCoord is None or len(choiceCoord) != 2 or piece not in eval(
+            "player" + str(currentPlayer + 1) + "Symbols").values() and not inValid:
+        print("Not your piece")
+        choice = input("Please select a piece coordinate: ")
+        while len(choice) != 2:
+            choice = input("Please select a piece coordinate: ")
+        choiceCoord = convertChoice(choice)
+        piece = positions[choiceCoord[0]][choiceCoord[1]]
+
+    if piece in "♚":
+        possibleMoves, check1, check2, checkmate1, checkmate2 = checkStalemate(player1Pieces["+"], "white")
+    elif piece in "♔":
+        possibleMoves, check1, check2, checkmate1, checkmate2 = checkStalemate(player2Pieces["+"], "black")
+    else:
+        # Check possible moves
+        funct = list(symbolFunction[piece])
+        funct.insert(-1, str(choiceCoord))
+        funct = "".join(funct)
+
+        if len(eval(funct)[0]) == 1:
+            possibleMoves = eval(funct)[0]
+        else:
+            possibleMoves = eval(funct)[0]
+
+    if staleMate1 == False and staleMate2 == False:
+        for move in possibleMoves:
+            if positions[move[0]][move[1]] == "-":
+                positions[move[0]][move[1]] = "◯"
+
+        display()
+        for move in possibleMoves:
+            if positions[move[0]][move[1]] == "◯":
+                positions[move[0]][move[1]] = "-"
+    else:
+        if staleMate2 and check2:
+            print(f"Checkmate: {Player1} Won!\nGame Over!")
+        elif staleMate1 and check1:
+            print(f"Checkmate: {Player2} Won!\nGame Over!")
+        else:
+            print(f"Stalemate: It's a Draw!\nGame Over!")
+        sys.exit()
+    # Get destination
+    destinationChoice = input("Where do you want the piece to go? -1 -> choose other piece ")
+    if destinationChoice == "-1":
+        continue
+    else:
+        destinationCoord = convertChoice(destinationChoice)
+    while destinationCoord is None or len(destinationChoice) != 2 or destinationCoord not in possibleMoves:
+        print("Invalid move")
+        destinationChoice = input("Where do you want the piece to go? -1 -> choose other piece ")
+        if destinationChoice == "-1":
+            if currentPlayer == 0:
+                currentPlayer += 1
+            else:
+                currentPlayer -= 1
+            break
+        destinationCoord = convertChoice(destinationChoice)
+    else:
+        # Move piece
+        positions[choiceCoord[0]][choiceCoord[1]] = "-"
+        positions[destinationCoord[0]][destinationCoord[1]] = piece
+
+        if currentPlayer == 0:
+            for key, value in player2Pieces.items():
+                if value == destinationCoord:
+                    player2Pieces[key] = [-1, -1]
+
+        elif currentPlayer == 1:
+            for key, value in player1Pieces.items():
+                if value == destinationCoord:
+                    player1Pieces[key] = [-1, -1]
+
+        if currentPlayer == 0:
+            for key, value in player1Pieces.items():
+                if value == choiceCoord:
+                    player1Pieces[key] = destinationCoord
+        else:
+            for key, value in player2Pieces.items():
+                if value == choiceCoord:
+                    player2Pieces[key] = destinationCoord
+
+    if currentPlayer == 0:
+        kingCoords = player1Pieces["+"]
+        currentPlayer += 1
+    else:
+        kingCoords = player2Pieces["+"]
+        currentPlayer -= 1
